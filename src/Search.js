@@ -1,21 +1,12 @@
-import React, { Component } from "react";
+import React from "react";
 
-class Search extends Component {
-    submitForm = e => {
-        e.preventDefault();
-    };
-    render() {
-        const { onChangeSearch, searchValue } = this.props;
-        return (
-            <form onSubmit={this.submitForm}>
-                <input
-                    type="text"
-                    onChange={onChangeSearch}
-                    value={searchValue}
-                />
-            </form>
-        );
-    }
-}
+const Search = ({ onChangeSearch, searchValue, onSubmit, children }) => {
+    return (
+        <form onSubmit={onSubmit}>
+            <input type="text" onChange={onChangeSearch} value={searchValue} />
+            <button type="submit">{children}</button>
+        </form>
+    );
+};
 
 export default Search;
