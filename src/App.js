@@ -35,12 +35,15 @@ class App extends Component {
 
     render() {
         return (
-            <div className="App">
+            <div className="page">
                 <h1>This is a list of users</h1>
-                <Search
-                    value={this.state.searchValue}
-                    onChangeSearch={this.onChangeSearch}
-                />
+                <div className="interactions">
+                    <Search
+                        value={this.state.searchValue}
+                        onChangeSearch={this.onChangeSearch}
+                    />
+                </div>
+
                 <Table
                     users={this.state.users}
                     searchValue={this.state.searchValue}
