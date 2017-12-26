@@ -1,13 +1,10 @@
 import React from "react";
 
-const submitForm = e => {
-    e.preventDefault();
-};
-
-const Search = ({ onChangeSearch, searchValue }) => {
+const Search = ({ onChangeSearch, searchValue, onSubmit, children }) => {
     return (
-        <form onSubmit={submitForm}>
+        <form onSubmit={onSubmit}>
             <input type="text" onChange={onChangeSearch} value={searchValue} />
+            <button type="submit">{children}</button>
         </form>
     );
 };

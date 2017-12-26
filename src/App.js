@@ -2,53 +2,123 @@ import React, { Component } from "react";
 import "./App.css";
 import Search from "./Search";
 import Table from "./Table";
-import User from "./User";
+import Button from "./Button";
 
-const cis = new User("CISV", "Cis", "Vercouteren", 21);
-const xander = new User("XANDERVR", "Xander", "Van Raemdonck", 21);
-const jari = new User("JARIV", "Jari", "Verswyvel", 20);
-const jerre = new User("JERREV", "Jerre", "Vermeir", 34);
-const ine = new User("INEP", "Ine", "Peeters");
-const users = [cis, xander, jari, jerre, ine];
+const DEFAULT_QUERY = "redux",
+    DEFAULT_HPP = 100,
+    PATH_BASE = "https://hn.algolia.com/api/v1",
+    PATH_SEARCH = "/search",
+    PARAM_SEARCH = "query=",
+    PARAM_PAGE = "page=",
+    PARAM_HPP = "hitsPerPage=";
 
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            users: users,
-            searchValue: ""
+            results: null,
+            searchKey: "",
+            searchTerm: DEFAULT_QUERY,
+            error: null
         };
     }
 
-    onDismiss = id => {
-        const updatedList = this.state.users.filter(el => id !== el.id);
+    componentDidMount() {
+        const { searchTerm } = this.state;
+        this.setState({ searchKey: searchTerm });
+        this.fetchSearchTopStories(searchTerm);
+    }
+
+    setSearchTopStories = result => {
+        const { hits, page } = result;
+        const { results, searchKey } = this.state;
+
+        const oldHits =
+            results && results[searchKey] ? results[searchKey].hits : [];
+
+        const updatedHits = [...oldHits, ...hits];
         this.setState({
-            users: updatedList
+            results: {
+                ...results,
+                [searchKey]: { hits: updatedHits, page }
+            }
         });
     };
 
+    fetchSearchTopStories = (searchTerm, page = 0) => {
+        fetch(
+            `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`
+        )
+            .then(r => r.json())
+            .then(result => this.setSearchTopStories(result))
+            .catch(e => {
+                this.setState({ error: e });
+            });
+    };
+
+    onSearchSubmit = e => {
+        const { searchTerm } = this.state;
+        this.setState({ searchKey: searchTerm });
+        if (this.needsToSearchTopStories(searchTerm))
+            this.fetchSearchTopStories(searchTerm);
+        e.preventDefault();
+    };
+
+    onDismiss = id => {
+        const { results, searchKey } = this.state;
+        const { hits, page } = results[searchKey];
+        const updatedHits = hits.filter(el => id !== el.objectID);
+        this.setState({
+            results: {
+                ...results,
+                [searchKey]: { hits: updatedHits, page }
+            }
+        });
+    };
+
+    needsToSearchTopStories = searchTerm => {
+        return !this.state.results[searchTerm];
+    };
     onChangeSearch = e => {
         this.setState({
-            searchValue: e.target.value
+            searchTerm: e.target.value
         });
     };
 
     render() {
+        const { searchTerm, results, searchKey, error } = this.state;
+        const page =
+            (results && results[searchKey] && results[searchKey].page) || 0;
+        const list =
+            (results && results[searchKey] && results[searchKey].hits) || [];
+
         return (
             <div className="page">
-                <h1>This is a list of users</h1>
                 <div className="interactions">
+                    <Button
+                        onClick={() =>
+                            this.fetchSearchTopStories(searchKey, page + 1)
+                        }
+                    >
+                        MORE
+                    </Button>
                     <Search
-                        value={this.state.searchValue}
+                        value={searchTerm}
                         onChangeSearch={this.onChangeSearch}
-                    />
+                        onSubmit={this.onSearchSubmit}
+                    >
+                        Search
+                    </Search>
                 </div>
-
-                <Table
-                    users={this.state.users}
-                    searchValue={this.state.searchValue}
-                    onDismiss={this.onDismiss}
-                />
+                {error ? (
+                    <p>Something went wrong! </p>
+                ) : (
+                    <Table
+                        list={list}
+                        searchValue={searchTerm}
+                        onDismiss={this.onDismiss}
+                    />
+                )}
             </div>
         );
     }
