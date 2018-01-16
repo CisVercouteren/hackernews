@@ -3,6 +3,7 @@ import "./App.css";
 import Search from "./Search";
 import Table from "./Table";
 import Button from "./Button";
+import Loading from "./Loading";
 
 const DEFAULT_QUERY = "redux",
     DEFAULT_HPP = 100,
@@ -19,7 +20,8 @@ class App extends Component {
             results: null,
             searchKey: "",
             searchTerm: DEFAULT_QUERY,
-            error: null
+            error: null,
+            isLoading: false
         };
     }
 
@@ -41,11 +43,13 @@ class App extends Component {
             results: {
                 ...results,
                 [searchKey]: { hits: updatedHits, page }
-            }
+            },
+            isLoading: false
         });
     };
 
     fetchSearchTopStories = (searchTerm, page = 0) => {
+        this.setState({ isLoading: true });
         fetch(
             `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`
         )
@@ -95,13 +99,14 @@ class App extends Component {
         return (
             <div className="page">
                 <div className="interactions">
-                    <Button
+                    <ButtonWithLoading
+                        isLoading={this.state.isLoading}
                         onClick={() =>
                             this.fetchSearchTopStories(searchKey, page + 1)
                         }
                     >
                         MORE
-                    </Button>
+                    </ButtonWithLoading>
                     <Search
                         value={searchTerm}
                         onChangeSearch={this.onChangeSearch}
@@ -123,5 +128,10 @@ class App extends Component {
         );
     }
 }
+
+const withLoading = Component => ({ isLoading, ...rest }) =>
+    isLoading ? <Loading /> : <Component {...rest} />;
+
+const ButtonWithLoading = withLoading(Button);
 
 export default App;
